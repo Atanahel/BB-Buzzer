@@ -23,7 +23,7 @@
  </div>
 
 <script >
-    var socket = io();
+    var socket = io('/display');
     $(document).ready(function() {
         socket.on('event' , function(data) {
             $("#events").append(data);
