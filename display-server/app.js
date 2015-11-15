@@ -5,8 +5,15 @@ var io = require('socket.io')(http);
 var display_socket;
 var admin_socket;
 
+var BB_hostname = "localhost"; //default server
+if(process.argv.length>=3){
+  BB_hostname = process.argv[2];
+}
 //Connect to the BB server
-var BB_socket = require('socket.io-client')('http://localhost:8111');
+console.log('Trying to connect to BB : http://'+BB_hostname+':8111');
+var BB_socket = require('socket.io-client')('http://'+BB_hostname+':8111');
+BB_socket.on('connect', function() { console.log('Connected to BB');})
+    .on('disconnect', function() { console.log('Disconnected to BB');});
 
 //Main display page
 app.get('/', function(req, res){
