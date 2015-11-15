@@ -2,6 +2,8 @@ var app = require('http').createServer()
 var io = require('socket.io')(app);
 var b = require('bonescript');
 
+var current_socket;
+
 app.listen(8111, function(){
   console.log('listening on *:8111');
 });
@@ -15,10 +17,10 @@ io.on('connection', function(socket){
       console.log('user disconnected');
     });
     //TEST!!!
-    setTimeOut(function(){sendEvent("btn1");},1000);
-    setTimeOut(function(){sendEvent("btn2");},2000);
-    setTimeOut(function(){sendEvent("btn3");},3000);
-    setTimeOut(function(){sendEvent("btn4");},4000);
+    setTimeout(function(){sendEvent("btn1");},1000);
+    setTimeout(function(){sendEvent("btn2");},2000);
+    setTimeout(function(){sendEvent("btn3");},3000);
+    setTimeout(function(){sendEvent("btn4");},4000);
 
   } else {
     socket.close();
