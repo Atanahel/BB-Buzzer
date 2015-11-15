@@ -17,90 +17,109 @@
 
 <script >
     var socket = io(':8000/display');
+    var stage;
+    var teams = [];
 
-    function team(name, x, y, color) {
-        this.name = name;
+    //Drawing animations for the teams
+    function TeamDisplay(team) {
+        this.name = team.name;
         //this.position = {x : x, y : y};
-        this.color = color;
+        this.color = team.color;
+        this.score = team.score;
 
         this.symbol = new createjs.Shape();
         this.symbol.graphics.beginFill(this.color).drawCircle(0, 0, 120);
 
-        this.textBox = new createjs.Text(this.name, "30px Arial", "#ffffff");
-        this.textBox.textAlign = "center";
-        this.textBox.textBaseline = "middle";
+        this.nameText = new createjs.Text(this.name, "30px Arial", "#ffffff");
+        this.nameText.textAlign = "center";
+        this.nameText.textBaseline = "middle";
+
+        this.scoreText = new createjs.Text(this.score, "30px Arial", "#ffffff");
+        this.scoreText.textAlign = "center";
+        this.scoreText.textBaseline = "middle";
+        this.scoreText.y = 50;
 
         this.container = new createjs.Container();
-        this.container.addChild(this.symbol, this.textBox);
-        this.container.x = x;
-        this.container.y = y;
+        this.container.addChild(this.symbol, this.nameText, this.scoreText);
+        this.container.x = team.x;
+        this.container.y = team.y;
 
-        this.buttonPressed = function() {
+        //animation states to be triggered
+        this.waitingState = function() {
             createjs.Tween.get(this.symbol, { loop: true })
-                    .to({ scaleX: 2, scaleY: 2 }, 500, createjs.Ease.getPowInOut(2))
+                    .to({ scaleX: 1.2, scaleY: 1.2 }, 500, createjs.Ease.getPowInOut(2))
                     .to({ scaleX: 1, scaleY: 1 }, 500, createjs.Ease.getPowInOut(2));
-            createjs.Tween.get(this.textBox, { loop: true })
-                    .to({ rotation: 20 }, 125, createjs.Ease.getPowOut(2))
-                    .to({ rotation: -20 }, 250, createjs.Ease.getPowInOut(2))
+            createjs.Tween.get(this.nameText, { loop: true })
+                    .to({ rotation: 10 }, 125, createjs.Ease.getPowOut(2))
+                    .to({ rotation: -10 }, 250, createjs.Ease.getPowInOut(2))
                     .to({ rotation: 0 }, 125, createjs.Ease.getPowIn(2));
-            setTimeout(teams[1].resetState,1000);
         };
 
+        this.answeringState = function() {
+            createjs.Tween.get(this.symbol, { loop: true })
+                    .to({ scaleX: 1.8, scaleY: 1.8 }, 300, createjs.Ease.getPowInOut(2))
+                    .to({ scaleX: 1., scaleY: 1. }, 300, createjs.Ease.getPowInOut(2));
+            createjs.Tween.get(this.nameText, { loop: true })
+                    .to({ rotation: 30 }, 125, createjs.Ease.getPowOut(2))
+                    .to({ rotation: -30 }, 250, createjs.Ease.getPowInOut(2))
+                    .to({ rotation: 0 }, 125, createjs.Ease.getPowIn(2));
+        };
+
+        //reset normal state
         this.resetState = function() {
             console.log(this.symbol);
             createjs.Tween.get(this.symbol, {override: true})
                     .to({ scaleX: 1, scaleY: 1 }, 500, createjs.Ease.getPowInOut(2));
-            createjs.Tween.get(this.textBox, {override: true})
+            createjs.Tween.get(this.nameText, {override: true})
                     .to({ rotation: 0 }, 125, createjs.Ease.getPowInOut(2));
         };
     }
 
-    var teamManager = {
-
-    };
-
-    var teams = {
-        1: new team("Team1", 250, 250, "red"),
-        2: new team("Team2", 1024-250, 250, "blue"),
-        3: new team("Team3", 250, 768-250, "marron"),
-        4: new team("Team4", 1024-250, 768-250, "green")
-    };
-
     function init() {
 
-        var stage = new createjs.Stage("demoCanvas");
-        $.each(teams, function(key,value) {
-            stage.addChild(value.container);
-        });
+        stage = new createjs.Stage("demoCanvas");
         createjs.Ticker.framerate=60;
         createjs.Ticker.addEventListener("tick", stage);
         //stage.update();
 
-        $('#btn1').click(function(){ teams[1].buttonPressed();});
-        $('#btn2').click(function(){ teams[2].buttonPressed();});
-        $('#btn3').click(function(){ teams[3].buttonPressed();});
-        $('#btn4').click(function(){ teams[4].buttonPressed();});
+        //TODO will be removed at some point
+        $('#btn1').click(function(){ teams[0].waitingState();});
+        $('#btn2').click(function(){ teams[1].waitingState();});
+        $('#btn3').click(function(){ teams[2].waitingState();});
+        $('#btn4').click(function(){ teams[3].waitingState();});
 
         socket.on('event' , function(data) {
             console.log(data);
-            switch(data) {
-                case "btn1":
-                    teams[1].buttonPressed();
+            switch(data.type) {
+                case "reset":
+                    teams[data.team_id].resetState();
                     break;
-                case "btn2":
-                    teams[2].buttonPressed();
+                case "waiting":
+                    teams[data.team_id].waitingState();
                     break;
-                case "btn3":
-                    teams[3].buttonPressed();
-                    break;
-                case "btn4":
-                    teams[4].buttonPressed();
+                case "answering":
+                    teams[data.team_id].answeringState();
                     break;
                 default:
-                    console.log("unknown event");
+                    console.log("unknown event : "+data);
             }
         });
-    };
+        socket.on('reset_display' , function(data) {
+            console.log(data);
+            //clean
+            $.each(teams, function(key,value) {
+                stage.removeChild(value.container);
+            });
+            teams = [];
+            //add
+            $.each(data, function(i, t) {
+                teams.push(new TeamDisplay(t));
+            });
+            $.each(teams, function(key,value) {
+                stage.addChild(value.container);
+            });
+        });
+    }
 
 </script>
 </body>
