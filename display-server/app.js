@@ -40,7 +40,7 @@ display_nsp.on('connection', function(socket) {
 
 //Accept only one admin connection
 admin_nsp.on('connection', function(socket){
-  console.log('a user connected');
+  console.log('Admin connected');
   if(!admin_socket) {
     admin_socket = socket;
     socket.on('disconnect', function () {
@@ -55,5 +55,6 @@ admin_nsp.on('connection', function(socket){
 
 // transfers button pressed events to the display sockets
 BB_socket.on('event', function (data) {
+  console.log('Transferring '+data);
   display_nsp.emit('event',data);
 });
