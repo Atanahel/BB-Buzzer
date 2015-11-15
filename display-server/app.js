@@ -2,15 +2,27 @@ var app = require('express')();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
-var display_socket;
+var display_nsp = io.of('/display');
+var admin_nsp = io.of('/admin');
 var admin_socket;
 
+var BB_hostname = "localhost"; //default server
+if(process.argv.length>=3){
+  BB_hostname = process.argv[2];
+}
 //Connect to the BB server
-var BB_socket = require('socket.io-client')('http://localhost:8111');
+console.log('Trying to connect to BB : http://'+BB_hostname+':8111');
+var BB_socket = require('socket.io-client')('http://'+BB_hostname+':8111');
+BB_socket.on('connect', function() { console.log('Connected to BB');})
+    .on('disconnect', function() { console.log('Disconnected to BB');});
 
 //Main display page
 app.get('/', function(req, res){
   res.sendFile(__dirname + '/display.html');
+});
+//Administration page
+app.get('/admin', function(req, res){
+  res.sendFile(__dirname + '/admin.html');
 });
 
 //Create HTTP server
@@ -18,27 +30,31 @@ http.listen(8000, function(){
   console.log('listening on *:8000');
 });
 
-//Wait for the connections TODO separate display_socket to admin_socket
-io.on('connection', function(socket){
-  console.log('a user connected');
-  if(!display_socket) {
-    display_socket = socket;
+//Accept all the display connections
+display_nsp.on('connection', function(socket) {
+  console.log('New display connected');
+  socket.on('disconnect', function () {
+    console.log('Display disconnected');
+  });
+});
+
+//Accept only one admin connection
+admin_nsp.on('connection', function(socket){
+  console.log('Admin connected');
+  if(!admin_socket) {
+    admin_socket = socket;
     socket.on('disconnect', function () {
-      display_socket = null;
-      console.log('user disconnected');
+      admin_socket = null;
+      console.log('Admin disconnected');
     });
   } else {
+    console.log('Refusing new admin');
     socket.close();
   }
 });
 
-
-// transfers button pressed events to the display_socket
+// transfers button pressed events to the display sockets
 BB_socket.on('event', function (data) {
-  if (display_socket) {
-    display_socket.emit("event", data);
-    console.log(data + " transferred to display!");
-  }else{
-    console.log(data + " not transferred");
-  }
+  console.log('Transferring '+data);
+  display_nsp.emit('event',data);
 });

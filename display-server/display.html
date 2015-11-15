@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <title>Game!</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <!--<script src="/socket.io/socket.io.js"></script>-->
-    <script src="create.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/create.js"></script>
 </head>
 <body onload="init();">
 <canvas id="demoCanvas" width="1024" height="768"></canvas>
@@ -16,7 +16,12 @@
 <button id="btn4">btn4</button>
 
 <script >
-    //var socket = io();
+    var socket = io(':8000/display');
+    $(document).ready(function() {
+        socket.on('event' , function(data) {
+            $("#events").append(data);
+        });
+    });
 
     function team(name, x, y, color) {
         this.name = name;
