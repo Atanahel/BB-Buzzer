@@ -1,4 +1,5 @@
-var app = require('express')();
+var express = require('express');
+var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
@@ -24,6 +25,9 @@ app.get('/', function(req, res){
 app.get('/admin', function(req, res){
   res.sendFile(__dirname + '/admin.html');
 });
+
+//Access to static files
+app.use(express.static('static'));
 
 //Create HTTP server
 http.listen(8000, function(){

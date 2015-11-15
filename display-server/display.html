@@ -17,11 +17,6 @@
 
 <script >
     var socket = io(':8000/display');
-    $(document).ready(function() {
-        socket.on('event' , function(data) {
-            $("#events").append(data);
-        });
-    });
 
     function team(name, x, y, color) {
         this.name = name;
@@ -72,9 +67,6 @@
     };
 
     function init() {
-        //socket.on('event' , function(data) {
-        //    console.log(data);
-        //});
 
         var stage = new createjs.Stage("demoCanvas");
         $.each(teams, function(key,value) {
@@ -88,6 +80,26 @@
         $('#btn2').click(function(){ teams[2].buttonPressed();});
         $('#btn3').click(function(){ teams[3].buttonPressed();});
         $('#btn4').click(function(){ teams[4].buttonPressed();});
+
+        socket.on('event' , function(data) {
+            console.log(data);
+            switch(data) {
+                case "btn1":
+                    teams[1].buttonPressed();
+                    break;
+                case "btn2":
+                    teams[2].buttonPressed();
+                    break;
+                case "btn3":
+                    teams[3].buttonPressed();
+                    break;
+                case "btn4":
+                    teams[4].buttonPressed();
+                    break;
+                default:
+                    console.log("unknown event");
+            }
+        });
     };
 
 </script>
