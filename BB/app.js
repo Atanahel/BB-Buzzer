@@ -1,6 +1,6 @@
 var app = require('http').createServer()
 var io = require('socket.io')(app);
-var b = require('bonescript');
+var b = require('octalbonescript');
 
 var current_socket;
 
@@ -10,37 +10,51 @@ app.listen(8111, function(){
 
 io.on('connection', function(socket){
   console.log('a user connected');
-  if(!current_socket) {
-    current_socket = socket;
     socket.on('disconnect', function () {
-      current_socket = null;
       console.log('user disconnected');
     });
-    //TEST!!!
-    setTimeout(function(){sendEvent("btn1");},1000);
-    setTimeout(function(){sendEvent("btn2");},2000);
-    setTimeout(function(){sendEvent("btn3");},3000);
-    setTimeout(function(){sendEvent("btn4");},4000);
-
-  } else {
-    socket.close();
-  }
 });
 
 var led = "USR3";
-var state = 0;
-b.pinMode(led, 'out');
+var led_state = 0;
+b.pinModeSync(led, b.OUTPUT);
 toggleLED = function() {
-    state = state ? 0 : 1;
-    b.digitalWrite(led, state);
+    led_state = state ? 0 : 1;
+    b.digitalWrite(led, led_state, function(err) {
+      if (err) {
+        console.error(err); //output any error
+        return;
+      }
+    });
 };
 
+
 sendEvent = function(event) {
-  if(current_socket) {
-    current_socket.emit("event",event);
-    console.log("Sent event : "+event);
-    toggleLED();
-  } else {
-    console.log("Could not send event : "+event);
-  }
-}
+  io.emitAll("event", event);
+  toggleLED();
+};
+
+var config = [
+  {"pin" : "P8_08", "event" : "btn1" },
+  {"pin" : "P8_10", "event" : "btn2" },
+  {"pin" : "P8_12", "event" : "btn3" },
+  {"pin" : "P8_14", "event" : "btn4" }
+];
+
+config.map( initialisePin );
+
+initialisePin = function(item) {
+  b.pinModeSync(item.pin, b.INPUT_PULLUP);
+  b.attachInterrupt(item.pin, b.CHANGE, function(err, resp) {
+    if(err){
+      console.error(err.message);
+      return;
+    }
+    sendEvent(item.event);
+  }, function(err){
+    if(err){
+      console.error(err.message);
+      return;
+    }
+  });
+};
