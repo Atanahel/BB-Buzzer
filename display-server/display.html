@@ -5,9 +5,10 @@
     <title>Game!</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
     <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/2.0.0/screenfull.js"></script>
     <script src="/js/create.js"></script>
 </head>
-<body onload="init();">
+<body onload="init();" style="margin:0px;">
 <canvas id="demoCanvas" width="1024" height="768" style="background-color: black;"></canvas>
 
 <button id="btn1">btn1</button>
@@ -43,7 +44,7 @@
         this.scoreText.y = 50;
 
         this.container = new createjs.Container();
-        this.container.addChild(this.symbol, this.nameText, this.scoreText);
+        this.container.addChild(this.symbol, this.nameText/*, this.scoreText*/);
         this.container.x = this.original_x;
         this.container.y = this.original_y;
 
@@ -98,6 +99,14 @@
     function init() {
 
         createjs.Sound.registerSound("sounds/gagne.wav", soundID);
+
+        // Canvas get fullscreen on click
+        var elem = document.getElementById('demoCanvas');
+        document.getElementById('demoCanvas').addEventListener('click', function () {
+            if (screenfull.enabled) {
+                screenfull.request(elem);
+            }
+        });
 
         stage = new createjs.Stage("demoCanvas");
         createjs.Ticker.framerate=60;
