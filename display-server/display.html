@@ -8,7 +8,7 @@
     <script src="/js/create.js"></script>
 </head>
 <body onload="init();">
-<canvas id="demoCanvas" width="1024" height="768"></canvas>
+<canvas id="demoCanvas" width="1024" height="768" style="background-color: black;"></canvas>
 
 <button id="btn1">btn1</button>
 <button id="btn2">btn2</button>
@@ -19,63 +19,85 @@
     var socket = io(':8000/display');
     var stage;
     var teams = [];
+    var soundID = "Buzzer";
+    var answering_position = {x: 1024/2, y: 720/2};
 
     //Drawing animations for the teams
     function TeamDisplay(team) {
         this.name = team.name;
-        //this.position = {x : x, y : y};
+        this.original_x = team.x;
+        this.original_y = team.y;
         this.color = team.color;
         this.score = team.score;
 
         this.symbol = new createjs.Shape();
         this.symbol.graphics.beginFill(this.color).drawCircle(0, 0, 120);
 
-        this.nameText = new createjs.Text(this.name, "30px Arial", "#ffffff");
+        this.nameText = new createjs.Text(this.name, "50px Arial", "#ffffff");
         this.nameText.textAlign = "center";
         this.nameText.textBaseline = "middle";
 
-        this.scoreText = new createjs.Text(this.score, "30px Arial", "#ffffff");
+        this.scoreText = new createjs.Text(this.score, "50px Arial", "#ffffff");
         this.scoreText.textAlign = "center";
         this.scoreText.textBaseline = "middle";
         this.scoreText.y = 50;
 
         this.container = new createjs.Container();
         this.container.addChild(this.symbol, this.nameText, this.scoreText);
-        this.container.x = team.x;
-        this.container.y = team.y;
+        this.container.x = this.original_x;
+        this.container.y = this.original_y;
 
         //animation states to be triggered
-        this.waitingState = function() {
-            createjs.Tween.get(this.symbol, { loop: true })
-                    .to({ scaleX: 1.2, scaleY: 1.2 }, 500, createjs.Ease.getPowInOut(2))
-                    .to({ scaleX: 1, scaleY: 1 }, 500, createjs.Ease.getPowInOut(2));
-            createjs.Tween.get(this.nameText, { loop: true })
-                    .to({ rotation: 10 }, 125, createjs.Ease.getPowOut(2))
-                    .to({ rotation: -10 }, 250, createjs.Ease.getPowInOut(2))
-                    .to({ rotation: 0 }, 125, createjs.Ease.getPowIn(2));
-        };
+//        this.waitingState = function() {
+//            createjs.Tween.get(this.symbol, { loop: true })
+//                    .to({ scaleX: 1.2, scaleY: 1.2 }, 500, createjs.Ease.getPowInOut(2))
+//                    .to({ scaleX: 1, scaleY: 1 }, 500, createjs.Ease.getPowInOut(2));
+//            createjs.Tween.get(this.nameText, { loop: true })
+//                    .to({ rotation: 10 }, 125, createjs.Ease.getPowOut(2))
+//                    .to({ rotation: -10 }, 250, createjs.Ease.getPowInOut(2))
+//                    .to({ rotation: 0 }, 125, createjs.Ease.getPowIn(2));
+//        };
 
         this.answeringState = function() {
+            createjs.Sound.play(soundID);
+            stage.setChildIndex( this.container, stage.numChildren-1);
+            createjs.Tween.get(this.container)
+                    .to({ x: answering_position.x, y: answering_position.y}, 500, createjs.Ease.getPowInOut(2));
+            createjs.Tween.get(this.symbol)
+                    .to({ scaleX: 1.7, scaleY: 1.7 }, 300, createjs.Ease.getPowInOut(2));
             createjs.Tween.get(this.symbol, { loop: true })
+                    .to({ scaleX: 1.7, scaleY: 1.7 }, 0, createjs.Ease.getPowInOut(2))
                     .to({ scaleX: 1.8, scaleY: 1.8 }, 300, createjs.Ease.getPowInOut(2))
-                    .to({ scaleX: 1., scaleY: 1. }, 300, createjs.Ease.getPowInOut(2));
-            createjs.Tween.get(this.nameText, { loop: true })
-                    .to({ rotation: 30 }, 125, createjs.Ease.getPowOut(2))
-                    .to({ rotation: -30 }, 250, createjs.Ease.getPowInOut(2))
-                    .to({ rotation: 0 }, 125, createjs.Ease.getPowIn(2));
+                    .to({ scaleX: 1.7, scaleY: 1.7 }, 300, createjs.Ease.getPowInOut(2));
+            //createjs.Tween.get(this.nameText, { loop: true })
+            //        .to({ rotation: 30 }, 125, createjs.Ease.getPowOut(2))
+            //        .to({ rotation: -30 }, 250, createjs.Ease.getPowInOut(2))
+            //        .to({ rotation: 0 }, 125, createjs.Ease.getPowIn(2));
         };
 
         //reset normal state
         this.resetState = function() {
             console.log(this.symbol);
+            createjs.Tween.get(this.container)
+                    .to({ x: this.original_x, y: this.original_y}, 500, createjs.Ease.getPowInOut(2));
             createjs.Tween.get(this.symbol, {override: true})
                     .to({ scaleX: 1, scaleY: 1 }, 500, createjs.Ease.getPowInOut(2));
             createjs.Tween.get(this.nameText, {override: true})
                     .to({ rotation: 0 }, 125, createjs.Ease.getPowInOut(2));
         };
+
+        this.buttonPressed = function() {
+            console.log(this.symbol);
+            createjs.Tween.get(this.symbol)
+                    .to({ scaleX: 1, scaleY: 1 }, 500, createjs.Ease.getPowInOut(2));
+            createjs.Tween.get(this.nameText)
+                    .to({ rotation: 0 }, 125, createjs.Ease.getPowInOut(2));
+        };
     }
 
     function init() {
+
+        createjs.Sound.registerSound("sounds/gagne.wav", soundID);
 
         stage = new createjs.Stage("demoCanvas");
         createjs.Ticker.framerate=60;
@@ -83,8 +105,8 @@
         //stage.update();
 
         //TODO will be removed at some point
-        $('#btn1').click(function(){ teams[0].waitingState();});
-        $('#btn2').click(function(){ teams[1].waitingState();});
+        $('#btn1').click(function(){ teams[0].answeringState();});
+        $('#btn2').click(function(){ teams[0].resetState();});
         $('#btn3').click(function(){ teams[2].waitingState();});
         $('#btn4').click(function(){ teams[3].waitingState();});
 
@@ -94,9 +116,12 @@
                 case "reset":
                     teams[data.team_id].resetState();
                     break;
-                case "waiting":
-                    teams[data.team_id].waitingState();
+                case "press":
+                    teams[data.team_id].buttonPressed();
                     break;
+                //case "waiting":
+                //    teams[data.team_id].waitingState();
+                //    break;
                 case "answering":
                     teams[data.team_id].answeringState();
                     break;

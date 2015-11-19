@@ -67,22 +67,27 @@ team = function(name, x, y, color) {
 //List of the teams and their data
 var teams = [new team("Team1", 250, 250, "red"),
     new team("Team2", 1024-250, 250, "blue"),
-    new team("Team3", 250, 768-250, "marron"),
+    new team("Team3", 250, 768-250, "orange"),
     new team("Team4", 1024-250, 768-250, "green")];
 
 //Handling the events
 var game_master = {
     current_answering_team_id : -1,
     set_current_answering_team : function(team_id) {
-        if(this.current_answering_team_id>0){
-            send_event_to_display({type : 'reset', team_id : this.current_answering_team_id});
-        }
         this.current_answering_team_id = team_id;
         send_event_to_display({type : 'answering', team_id : this.current_answering_team_id});
     },
+    reset_current_answering_team : function() {
+        send_event_to_display({type : 'reset', team_id : this.current_answering_team_id});
+        this.current_answering_team_id = -1;
+    },
     button_pressed : function(team_id) {
-        if(team_id>=0 && team_id<teams.length)
-            this.set_current_answering_team(team_id);
+        if(team_id>=0 && team_id<teams.length) {
+            if (this.current_answering_team_id == -1)
+                this.set_current_answering_team(team_id);
+            else
+                send_event_to_display({type : 'press', team_id : team_id});
+        }
     }
 };
 
