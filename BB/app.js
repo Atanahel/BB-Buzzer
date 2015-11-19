@@ -19,7 +19,7 @@ var led = "USR3";
 var led_state = 0;
 b.pinModeSync(led, b.OUTPUT);
 toggleLED = function() {
-    led_state = state ? 0 : 1;
+    led_state = led_state ? 0 : 1;
     b.digitalWrite(led, led_state, function(err) {
       if (err) {
         console.error(err); //output any error
@@ -30,7 +30,8 @@ toggleLED = function() {
 
 
 sendEvent = function(event) {
-  io.emitAll("event", event);
+  console.log(event);
+  io.emit("event", event);
   toggleLED();
 };
 
@@ -40,8 +41,6 @@ var config = [
   {"pin" : "P8_12", "event" : "btn3" },
   {"pin" : "P8_14", "event" : "btn4" }
 ];
-
-config.map( initialisePin );
 
 initialisePin = function(item) {
   b.pinModeSync(item.pin, b.INPUT_PULLUP);
@@ -58,3 +57,6 @@ initialisePin = function(item) {
     }
   });
 };
+
+config.map( initialisePin );
+
