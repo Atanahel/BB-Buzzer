@@ -30,8 +30,9 @@ app.get('/admin', function(req, res){
 app.use(express.static('static'));
 
 //Create HTTP server
-http.listen(8000, function(){
-    console.log('listening on *:8000');
+var port=8765;
+http.listen(port, function(){
+    console.log('listening on *:'+port);
 });
 
 // transfers button pressed events to the display sockets TODO output the button id directly from the BB
@@ -48,6 +49,15 @@ BB_socket.on('event', function (data) {
             break;
         case 'btn4':
             game_master.button_pressed(3);
+            break;
+        case 'btn5':
+            game_master.button_pressed(4);
+            break;
+        case 'btn6':
+            game_master.button_pressed(5);
+            break;
+        case 'btn7':
+            game_master.button_pressed(6);
             break;
         default:
             console.log("Weird BB event : "+data);
@@ -68,7 +78,9 @@ team = function(name, x, y, color) {
 var teams = [new team("Team1", 250, 250, "red"),
     new team("Team2", 1024-250, 250, "blue"),
     new team("Team3", 250, 768-250, "orange"),
-    new team("Team4", 1024-250, 768-250, "green")];
+    new team("Team4", 1024-250, 768-250, "green"),
+    new team("Team5", 250, 768-250, "yellow"),
+    new team("Team6", 1024-250, 768-250, "pink")];
 
 //Handling the events
 var game_master = {
@@ -78,8 +90,10 @@ var game_master = {
         send_event_to_display({type : 'answering', team_id : this.current_answering_team_id});
     },
     reset_current_answering_team : function() {
-        send_event_to_display({type : 'reset', team_id : this.current_answering_team_id});
-        this.current_answering_team_id = -1;
+        if (this.current_answering_team_id >= 0) {
+            send_event_to_display({type: 'reset', team_id: this.current_answering_team_id});
+            this.current_answering_team_id = -1;
+        }
     },
     button_pressed : function(team_id) {
         if(team_id>=0 && team_id<teams.length) {
@@ -102,6 +116,9 @@ display_nsp.on('connection', function(socket) {
     socket.emit("reset_display",teams);
     socket.on('disconnect', function () {
         console.log('Display disconnected');
+    });
+    socket.on('reset', function () {
+        game_master.reset_current_answering_team();
     });
 });
 

@@ -8,16 +8,17 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/2.0.0/screenfull.js"></script>
     <script src="/js/create.js"></script>
 </head>
-<body onload="init();" style="margin:0px;">
+<body style="margin:0px;">
 <canvas id="demoCanvas" width="1024" height="768" style="background-color: black;"></canvas>
 
 <button id="btn1">btn1</button>
 <button id="btn2">btn2</button>
-<button id="btn3">btn3</button>
-<button id="btn4">btn4</button>
+<button id="reset-button">Reset!!</button>
+<button id="fullscreen-button">Fullscreen!!</button>
 
 <script >
-    var socket = io(':8000/display');
+    var port = 8765;
+    var socket = io(':'+port+'/display');
     var stage;
     var teams = [];
     var soundID = "Buzzer";
@@ -90,23 +91,18 @@
         this.buttonPressed = function() {
             console.log(this.symbol);
             createjs.Tween.get(this.symbol)
-                    .to({ scaleX: 1, scaleY: 1 }, 500, createjs.Ease.getPowInOut(2));
-            createjs.Tween.get(this.nameText)
-                    .to({ rotation: 0 }, 125, createjs.Ease.getPowInOut(2));
+                    .to({ scaleX: 1.2, scaleY: 1.2 }, 100, createjs.Ease.getPowOut(2))
+                    .to({ scaleX: 1, scaleY: 1 }, 300, createjs.Ease.getPowInOut(2));
         };
     }
 
-    function init() {
+    $(document).ready(function (){
 
         createjs.Sound.registerSound("sounds/gagne.wav", soundID);
 
         // Canvas get fullscreen on click
         var elem = document.getElementById('demoCanvas');
-        document.getElementById('demoCanvas').addEventListener('click', function () {
-            if (screenfull.enabled) {
-                screenfull.request(elem);
-            }
-        });
+        document.getElementById('demoCanvas').addEventListener('click', function(){ socket.emit('reset');});
 
         stage = new createjs.Stage("demoCanvas");
         createjs.Ticker.framerate=60;
@@ -116,8 +112,14 @@
         //TODO will be removed at some point
         $('#btn1').click(function(){ teams[0].answeringState();});
         $('#btn2').click(function(){ teams[0].resetState();});
-        $('#btn3').click(function(){ teams[2].waitingState();});
-        $('#btn4').click(function(){ teams[3].waitingState();});
+
+
+        $('#reset-button').click(function(){ socket.emit('reset');});
+        $('#fullscreen-button').click(function() {
+            if (screenfull.enabled) {
+                screenfull.request(elem);
+            }
+        });
 
         socket.on('event' , function(data) {
             console.log(data);
@@ -153,7 +155,7 @@
                 stage.addChild(value.container);
             });
         });
-    }
+    });
 
 </script>
 </body>

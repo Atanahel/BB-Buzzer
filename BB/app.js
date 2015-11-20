@@ -39,7 +39,9 @@ var config = [
   {"pin" : "P8_08", "event" : "btn1" },
   {"pin" : "P8_10", "event" : "btn2" },
   {"pin" : "P8_12", "event" : "btn3" },
-  {"pin" : "P8_14", "event" : "btn4" }
+  {"pin" : "P8_14", "event" : "btn4" },
+  {"pin" : "P8_16", "event" : "btn5" },
+  {"pin" : "P8_18", "event" : "btn6" }
 ];
 
 initialisePin = function(item) {
