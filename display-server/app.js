@@ -75,12 +75,12 @@ team = function(name, x, y, color) {
 };
 
 //List of the teams and their data
-var teams = [	new team(" ",    0 +65 +(150 + 160),     160, "red"),
-				new team(" ",    0 +65 +(      160),   768/2, "blue"),
-				new team(" ",    0 +65 +(150 + 160), 768-160, "orange"),
-				new team(" ", 1024 -65 -(150 + 160),     160, "green"),
-				new team(" ", 1024 -65 -(      160),   768/2, "yellow"),
-				new team(" ", 1024 -65 -(150 + 160), 768-160, "pink")];
+var teams = [	new team("noir",    0 +65 +(150 + 160),     160, "red"),
+				new team("gris",    0 +65 +(      160),   768/2, "blue"),
+				new team("mauve",    0 +65 +(150 + 160), 768-160, "orange"),
+				new team("beige", 1024 -65 -(150 + 160),     160, "green"),
+				new team("turquoise", 1024 -65 -(      160),   768/2, "yellow"),
+				new team("orange", 1024 -65 -(150 + 160), 768-160, "pink")];
 
 //Handling the events
 var game_master = {
