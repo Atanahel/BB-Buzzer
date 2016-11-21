@@ -72,15 +72,16 @@ team = function(name, x, y, color) {
 	this.x = x;
 	this.y = y;
 	this.score = 0;
+	this.allowed_to_answer = true;
 };
 
 //List of the teams and their data
-var teams = [	new team("noir",    0 +65 +(150 + 160),     160, "red"),
-				new team("gris",    0 +65 +(      160),   768/2, "blue"),
-				new team("mauve",    0 +65 +(150 + 160), 768-160, "orange"),
-				new team("beige", 1024 -65 -(150 + 160),     160, "green"),
-				new team("turquoise", 1024 -65 -(      160),   768/2, "yellow"),
-				new team("orange", 1024 -65 -(150 + 160), 768-160, "pink")];
+var teams = [	new team("DEATH!",    0 +65 +(150 + 160),     160, "red"),
+				new team("Bordel",    0 +65 +(      160),   768/2, "blue"),
+				new team("Blonds",    0 +65 +(150 + 160), 768-160, "orange"),
+				new team("Gris", 1024 -65 -(150 + 160),     160, "green"),
+				new team("Personne", 1024 -65 -(      160),   768/2, "brown"),
+				new team("Chevelus", 1024 -65 -(150 + 160), 768-160, "purple")];
 
 //Handling the events
 var game_master = {
@@ -96,17 +97,29 @@ var game_master = {
 		}
 	},
 	button_pressed : function(team_id) {
-		if(team_id>=0 && team_id<teams.length) {
+		if(team_id>=0 && team_id<teams.length && teams[team_id].allowed_to_answer) {
 			if (this.current_answering_team_id == -1)
 				this.set_current_answering_team(team_id);
 			else
 				send_event_to_display({type : 'press', team_id : team_id});
 		}
+	},
+	deactivate_team : function(team_id) {
+		if(team_id>=0 && team_id<teams.length) {
+			teams[team_id].allowed_to_answer = false;
+			send_event_to_display({type : 'deactivate', team_id : team_id});
+		}
+	},
+	activate_team : function(team_id) {
+		if(team_id>=0 && team_id<teams.length) {
+			teams[team_id].allowed_to_answer = true;
+			send_event_to_display({type : 'activate', team_id : team_id});
+		}
 	}
 };
 
 function send_event_to_display(event) {
-	display_nsp.emit('event',event);
+	display_nsp.emit('event', event);
 }
 
 //Accept all the display connections
@@ -131,6 +144,23 @@ admin_nsp.on('connection', function(socket){
 			admin_socket = null;
 			console.log('Admin disconnected');
 		});
+		admin_socket.emit("refresh", teams);
+		admin_socket.on('deactivate', function(team_id) {
+			game_master.deactivate_team(team_id)
+		});
+		admin_socket.on('activate', function(team_id) {
+			game_master.activate_team(team_id)
+		});
+		admin_socket.on('ask_for_refresh', function() {
+			admin_socket.emit('refresh', teams);
+		});
+		admin_socket.on('reset_display', function(data) {
+			teams = data;
+			display_nsp.emit("reset_display", teams);
+		});
+		admin_socket.on('reset', function() {
+			display_nsp.emit("reset", teams);
+		})
 	} else {
 		console.log('Refusing new admin');
 		socket.close();

@@ -3,27 +3,125 @@
 <head lang="en">
     <meta charset="UTF-8">
     <title>Administration of game</title>
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
-    <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
-    <!-- Latest compiled and minified JavaScript -->
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.0.7/angular-material.min.css">
+
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-animate.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-aria.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-messages.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.4.8/angular-cookies.min.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angular_material/1.0.7/angular-material.min.js"></script>
+
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/socket.js"></script>
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+          rel="stylesheet">
+
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimal-ui" />
 </head>
-<body>
-<div class="container">
-    <div class="page-header">
-        <h1>Game Master</h1>
+<body ng-app="myApp" ng-cloak ng-controller="MyCtrl">
+
+<md-toolbar>
+<div class="md-toolbar-tools" layout="row">
+  <h1>Game Master</h1>
+
+    <md-button class="md-icon-button"
+               ng-click="askForRefresh()">
+        <md-icon aria-label="Refresh" class="material-icons">refresh</md-icon>
+    </md-button>
+    <div flex></div>
+    <md-button class="md-icon-button"
+               ng-click="resetDisplay()">
+        <md-icon aria-label="Upload" class="material-icons">file_upload</md-icon>
+    </md-button>
+</div>
+</md-toolbar>
+
+<div flex-offset='10' flex="80" layout="column">
+
+    <div>
+        <div layout="row">
+    <md-list flex="50">
+      <md-subheader class="md-no-sticky">Activated teams</md-subheader>
+      <md-list-item ng-repeat="t in teams track by $index">
+        <p> {{ t.name }} </p>
+        <md-switch class="md-secondary" ng-model="t.allowed_to_answer" ng-change="toggleStatus($index)"></md-switch>
+      </md-list-item>
+    </md-list>
+        <md-button class="md-primary md-raised" flex="50" ng-click="reset()">Reset</md-button>
+            </div>
     </div>
 
+
+
+
+    <div ng-repeat="t in teams track by $index" class=" md-padding" >
+        <div class="md-whiteframe-10dp">
+        <md-toolbar>
+        <div class="md-toolbar-tools">
+          <h2 class="md-flex">Team : {{$index}}</h2>
+        </div>
+        </md-toolbar>
+
+        <md-content flex layout-padding>
+          <div layout="row">
+          <md-input-container flex="50">
+            <label>Name</label>
+            <input ng-model="t.name">
+          </md-input-container>
+
+          <md-input-container flex="50">
+            <label>Color</label>
+            <input ng-model="t.color">
+          </md-input-container>
+          </div>
+        </md-content>
+        </div>
+
+    </div>
 </div>
 
 <script >
-    var socket = io(':8000/admin');
-    $(document).ready(function() {
-        
+
+    angular.module('myApp', [
+      'btford.socket-io', 'ngMaterial'
+    ]).
+    factory('mySocket', function (socketFactory) {
+        var port = 8765;
+        var myIoSocket = io.connect(':'+port+'/admin');
+
+      return socketFactory({
+        ioSocket: myIoSocket
+      });
+    }).
+    controller('MyCtrl', function (mySocket, $scope) {
+        $scope.teams = [];
+        mySocket.on('refresh', function (teams) {
+            $scope.teams = teams;
+        });
+
+        $scope.askForRefresh = function() {
+            mySocket.emit('ask_for_refresh');
+        };
+
+        $scope.toggleStatus = function(team_id) {
+            if ($scope.teams[team_id].allowed_to_answer) {
+                mySocket.emit('activate', team_id);
+            } else {
+                mySocket.emit('deactivate', team_id);
+            }
+        };
+
+        $scope.resetDisplay = function () {
+            mySocket.emit('reset_display', $scope.teams);
+        };
+
+        $scope.reset = function () {
+            mySocket.emit('reset');
+        };
     });
+
 </script>
 </body>
 </html>

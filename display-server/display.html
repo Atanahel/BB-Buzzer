@@ -50,10 +50,10 @@ left: 50%;
 		this.symbol.graphics.beginFill(this.color).drawCircle(0, 0, 120);
 
 		// this.nameText = new createjs.Text(this.name, "50px Arial", "#ffffff");
-		this.nameText = new createjs.Text(this.name, "50px 'Comic Sans MS'", "rgba(255,255,255,.5)");
+		this.nameText = new createjs.Text(this.name, "55px 'Comic Sans MS'", "rgba(255,255,255,1.0)");
 		this.nameText.textAlign = "center";
 		this.nameText.textBaseline = "middle";
-		this.nameText.shadow = new createjs.Shadow("#000000", 5, 5, 0);
+		this.nameText.shadow = new createjs.Shadow("#000000", 2, 2, 0);
 		// this.nameText.shadow = new createjs.Shadow("#000000", 0, 0, 5);
 
 		this.scoreText = new createjs.Text(this.score, "50px Arial", "#ffffff");
@@ -65,6 +65,7 @@ left: 50%;
 		this.container.addChild(this.symbol, this.nameText/*, this.scoreText*/);
 		this.container.x = this.original_x;
 		this.container.y = this.original_y;
+
 
 		//animation states to be triggered
 //        this.waitingState = function() {
@@ -99,12 +100,19 @@ left: 50%;
 		this.resetState = function() {
 			console.log(this.symbol);
 			createjs.Tween.get(this.container)
-					.to({ x: this.original_x, y: this.original_y}, 100, createjs.Ease.getPowOut(2));
+					.to({ x: this.original_x, y: this.original_y}, 200, createjs.Ease.getPowOut(2));
 			createjs.Tween.get(this.symbol, {override: true})
-					.to({ scaleX: 1, scaleY: 1 }, 100, createjs.Ease.getPowInOut(2));
+					.to({ scaleX: 1, scaleY: 1, alpha: 1 }, 200, createjs.Ease.getPowInOut(2));
 			createjs.Tween.get(this.nameText, {override: true})
-					.to({ rotation: 0 }, 125, createjs.Ease.getPowInOut(2))
-					.to({ scaleX: 1, scaleY: 1 }, 0, createjs.Ease.getPowInOut(2))
+					.to({ rotation: 0, scaleX: 1, scaleY: 1}, 200, createjs.Ease.getPowInOut(2))
+		};
+
+		this.deactivatedState = function() {
+			this.resetState();
+			createjs.Tween.get(this.symbol)
+					.to({ scaleX: 0.2, scaleY: 0.2, alpha: 0.5 }, 800, createjs.Ease.getPowInOut(2));
+			createjs.Tween.get(this.nameText)
+					.to({ scaleX: 0.4, scaleY: 0.4 }, 800, createjs.Ease.getPowInOut(2));
 		};
 
 		this.buttonPressed = function() {
@@ -116,6 +124,10 @@ left: 50%;
 					.to({ scaleX: 1.7, scaleY: 1.7 }, 0, createjs.Ease.getPowOut(2))
 					.to({ scaleX: 1, scaleY: 1 }, 200, createjs.Ease.getPowOut(2));
 		};
+
+		if (!team.allowed_to_answer) {
+			this.deactivatedState();
+		}
 	}
 
 	$(document).ready(function (){
@@ -127,10 +139,10 @@ left: 50%;
 		document.getElementById('demoCanvas').addEventListener('click', function(){ socket.emit('reset');});
 		$(window).keypress(function (e) {
 			if (e.keyCode === 0 || e.keyCode === 32) {
-				e.preventDefault()
+				e.preventDefault();
 				socket.emit('reset');
 			}
-		})
+		});
 
 		stage = new createjs.Stage("demoCanvas");
 		createjs.Ticker.framerate=60;
@@ -158,11 +170,14 @@ left: 50%;
 				case "press":
 					teams[data.team_id].buttonPressed();
 					break;
-				//case "waiting":
-				//    teams[data.team_id].waitingState();
-				//    break;
 				case "answering":
 					teams[data.team_id].answeringState();
+					break;
+				case "activate":
+					teams[data.team_id].resetState();
+					break;
+				case "deactivate":
+					teams[data.team_id].deactivatedState();
 					break;
 				default:
 					console.log("unknown event : "+data);
