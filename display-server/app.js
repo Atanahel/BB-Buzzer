@@ -76,16 +76,16 @@ team = function(name, x, y, color) {
 };
 
 //List of the teams and their data
-var teams = [	new team("DEATH!",    0 +65 +(150 + 160),     160, "red"),
-				new team("Bordel",    0 +65 +(      160),   768/2, "blue"),
-				new team("Blonds",    0 +65 +(150 + 160), 768-160, "orange"),
-				new team("Gris", 1024 -65 -(150 + 160),     160, "green"),
-				new team("Personne", 1024 -65 -(      160),   768/2, "brown"),
-				new team("Chevelus", 1024 -65 -(150 + 160), 768-160, "purple")];
+var teams = [	new team("Team 0",    0 +65 +(150 + 160),     160, "red"),
+				new team("Team 1",    0 +65 +(      160),   768/2, "blue"),
+				new team("Team 2",    0 +65 +(150 + 160), 768-160, "orange"),
+				new team("Team 3", 1024 -65 -(150 + 160),     160, "green"),
+				new team("Team 4", 1024 -65 -(      160),   768/2, "brown"),
+				new team("Team 5", 1024 -65 -(150 + 160), 768-160, "purple")];
 
 //Handling the events
 var game_master = {
-	current_answering_team_id : -1,
+	current_answering_team_id : 2,
 	set_current_answering_team : function(team_id) {
 		this.current_answering_team_id = team_id;
 		send_event_to_display({type : 'answering', team_id : this.current_answering_team_id});
@@ -108,6 +108,8 @@ var game_master = {
 		if(team_id>=0 && team_id<teams.length) {
 			teams[team_id].allowed_to_answer = false;
 			send_event_to_display({type : 'deactivate', team_id : team_id});
+			if (this.current_answering_team_id == team_id)
+				this.current_answering_team_id = -1;
 		}
 	},
 	activate_team : function(team_id) {
@@ -120,6 +122,9 @@ var game_master = {
 
 function send_event_to_display(event) {
 	display_nsp.emit('event', event);
+	if (admin_socket) {
+		admin_socket.emit('event', event);
+	}
 }
 
 //Accept all the display connections
@@ -159,10 +164,19 @@ admin_nsp.on('connection', function(socket){
 			display_nsp.emit("reset_display", teams);
 		});
 		admin_socket.on('reset', function() {
+			game_master.reset_current_answering_team();
 			display_nsp.emit("reset", teams);
 		})
 	} else {
 		console.log('Refusing new admin');
-		socket.close();
+		//socket.close();  // Crashes?
 	}
 });
+
+setInterval(updateAdmin, 100);
+
+function updateAdmin( )
+{
+	if(admin_socket)
+		admin_socket.emit("current_answering_team_id", game_master.current_answering_team_id);
+}

@@ -22,6 +22,14 @@
 </head>
 <body ng-app="myApp" ng-cloak ng-controller="MyCtrl">
 
+<style>
+    .answering-team{
+        color: red;
+        font-weight: bold;
+        font-size: 200%;
+    }
+</style>
+
 <md-toolbar>
 <div class="md-toolbar-tools" layout="row">
   <h1>Game Master</h1>
@@ -45,11 +53,11 @@
     <md-list flex="50">
       <md-subheader class="md-no-sticky">Activated teams</md-subheader>
       <md-list-item ng-repeat="t in teams track by $index">
-        <p> {{ t.name }} </p>
+        <p data-ng-class="{'answering-team': ($index == current_answering_team_id)}"> {{ t.name }} </p>
         <md-switch class="md-secondary" ng-model="t.allowed_to_answer" ng-change="toggleStatus($index)"></md-switch>
       </md-list-item>
     </md-list>
-        <md-button class="md-primary md-raised" flex="50" ng-click="reset()">Reset</md-button>
+        <md-button class="md-primary md-raised" ng-disabled="current_answering_team_id<0" flex="50" ng-click="reset()">Reset</md-button>
             </div>
     </div>
 
@@ -97,8 +105,12 @@
     }).
     controller('MyCtrl', function (mySocket, $scope) {
         $scope.teams = [];
+        $scope.current_answering_team_id = -1;
         mySocket.on('refresh', function (teams) {
             $scope.teams = teams;
+        });
+        mySocket.on('current_answering_team_id', function (current_answering_team_id) {
+            $scope.current_answering_team_id = current_answering_team_id;
         });
 
         $scope.askForRefresh = function() {

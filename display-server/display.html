@@ -6,13 +6,14 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
 	<!-- <script src="https://cdnjs.cloudflare.com/ajax/libs/screenfull.js/2.0.0/screenfull.js"></script> -->
-	<script src="/js/create.js"></script>
+	<script src="https://code.createjs.com/createjs-2015.11.26.min.js"></script>
+	<!--<script src="/js/create.js"></script>-->
 </head>
 <body style="margin:0px;min-height:100%;background-color: black;">
 <canvas id="demoCanvas" width="1024" height="768" style="
 background-color: black;
-width:1024px;
-height:768px;
+width:100%;
+height:100%;
 display:block;
 position: absolute;
 top: 50%;
@@ -108,11 +109,14 @@ left: 50%;
 		};
 
 		this.deactivatedState = function() {
-			this.resetState();
-			createjs.Tween.get(this.symbol)
+			//this.resetState();
+			createjs.Sound.play("deactivate").volume = 0.01;
+			createjs.Tween.get(this.container)
+					.to({ x: this.original_x, y: this.original_y}, 800, createjs.Ease.getPowOut(2));
+			createjs.Tween.get(this.nameText, {override: true})
+					.to({ rotation: 0, scaleX: 0.4, scaleY: 0.4}, 800, createjs.Ease.getPowInOut(2));
+			createjs.Tween.get(this.symbol, {override: true})
 					.to({ scaleX: 0.2, scaleY: 0.2, alpha: 0.5 }, 800, createjs.Ease.getPowInOut(2));
-			createjs.Tween.get(this.nameText)
-					.to({ scaleX: 0.4, scaleY: 0.4 }, 800, createjs.Ease.getPowInOut(2));
 		};
 
 		this.buttonPressed = function() {
@@ -133,6 +137,9 @@ left: 50%;
 	$(document).ready(function (){
 
 		createjs.Sound.registerSound("sounds/gagne.wav", soundID);
+		createjs.Sound.registerSound("sounds/activate.mp3", "activate");
+		createjs.Sound.registerSound("sounds/deactivate.mp3", "deactivate");
+		createjs.Sound.registerSound("sounds/dingdong.wav", "reset");
 
 		// Canvas get fullscreen on click
 		var elem = document.getElementById('demoCanvas');
@@ -165,6 +172,7 @@ left: 50%;
 			console.log(data);
 			switch(data.type) {
 				case "reset":
+						createjs.Sound.play("reset").volume = 0.1;
 					teams[data.team_id].resetState();
 					break;
 				case "press":
@@ -174,6 +182,7 @@ left: 50%;
 					teams[data.team_id].answeringState();
 					break;
 				case "activate":
+						createjs.Sound.play("activate").volume = 0.03;
 					teams[data.team_id].resetState();
 					break;
 				case "deactivate":
